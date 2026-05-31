@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="bs">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
+  <meta name="theme-color" content="#2D7D46"/>
+  <meta name="mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-title" content="Generalno"/>
+  <link rel="manifest" href="manifest.json"/>
+  <link rel="apple-touch-icon" href="icons/icon-192.png"/>
+  <title>Generalno Čišćenje Stana</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%;overflow-x:hidden}
+    body{font-family:'Nunito','Trebuchet MS',sans-serif;background:#F2F7F4;color:#1C1C1E;-webkit-tap-highlight-color:transparent}
+
+    #header{
+      position:sticky;top:0;z-index:100;
+      background:#1C1C1E;padding:18px 16px 14px;
+      border-radius:0 0 24px 24px;
+      box-shadow:0 6px 24px rgba(0,0,0,0.3);
+      text-align:center;
+    }
+    #header h1{font-size:19px;font-weight:900;color:#fff;letter-spacing:0.5px;margin:4px 0 2px}
+    #header-sub{font-size:12px;color:#888;margin-bottom:8px}
+    #total-badge{
+      display:inline-flex;align-items:center;gap:6px;
+      background:rgba(255,255,255,0.1);border-radius:20px;
+      padding:3px 14px;font-size:13px;font-weight:800;color:#fff;
+    }
+
+    /* Room tabs */
+    #room-tabs{
+      display:flex;gap:8px;padding:14px 12px;
+      overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;
+      flex-wrap:nowrap;
+    }
+    #room-tabs::-webkit-scrollbar{display:none}
+    .room-btn{
+      flex:0 0 auto;border:2.5px solid var(--c);border-radius:14px;
+      background:#fff;color:var(--c);
+      padding:8px 12px;font-family:'Nunito',sans-serif;
+      font-size:12px;font-weight:700;cursor:pointer;
+      text-align:center;min-width:70px;transition:all 0.15s;
+      line-height:1.5;
+    }
+    .room-btn.active{background:var(--c);color:#fff;box-shadow:0 4px 14px color-mix(in srgb,var(--c) 50%,transparent)}
+    .room-btn .room-pct{font-size:10px;font-weight:600;opacity:0.8}
+
+    /* Progress */
+    #progress-wrap{max-width:480px;margin:0 auto 12px;padding:0 14px}
+    #progress-box{
+      background:#fff;border-radius:16px;padding:12px 14px;
+      box-shadow:0 2px 12px rgba(0,0,0,0.07);
+      display:flex;align-items:center;gap:10px;
+    }
+    #progress-inner{flex:1}
+    #progress-label{font-size:11px;color:#999;margin-bottom:5px}
+    #progress-bar-bg{height:9px;background:#EEE;border-radius:5px;overflow:hidden}
+    #progress-bar{height:100%;width:0%;border-radius:5px;transition:width 0.4s cubic-bezier(.4,2,.6,1)}
+    #progress-pct{font-size:18px;font-weight:900;min-width:40px;text-align:right}
+    #reset-btn{background:none;border:1.5px solid #EEE;border-radius:8px;padding:4px 8px;font-size:10px;color:#BBB;cursor:pointer;font-family:'Nunito',sans-serif}
+    #congrats{text-align:center;padding:6px 0 0;font-size:14px;font-weight:800;display:none}
+
+    /* Tasks */
+    #tasks-wrap{max-width:480px;margin:0 auto;padding:0 14px 100px}
+    .section-title{font-size:12px;font-weight:800;letter-spacing:0.5px;margin:16px 0 7px;text-transform:uppercase}
+    .task-item{
+      display:flex;align-items:center;gap:10px;
+      background:#fff;border:2px solid #EEE;border-radius:14px;
+      padding:11px 12px;margin-bottom:6px;cursor:pointer;
+      transition:all 0.15s;user-select:none;-webkit-user-select:none;
+    }
+    .task-item:active{transform:scale(0.97)}
+    .task-checkbox{
+      width:26px;height:26px;border-radius:8px;border:2.5px solid #DDD;
+      background:#fff;display:flex;align-items:center;justify-content:center;
+      flex-shrink:0;font-size:14px;color:#fff;font-weight:900;transition:all 0.15s;
+    }
+    .task-emoji{font-size:19px;flex-shrink:0}
+    .task-name{font-size:14px;font-weight:700;color:#1C1C1E;line-height:1.3;flex:1;transition:all 0.15s}
+    .task-item.checked .task-name{color:#BBB;text-decoration:line-through}
+    .task-done-icon{font-size:15px;opacity:0;transition:opacity 0.15s}
+    .task-item.checked .task-done-icon{opacity:1}
+
+    /* Overall progress bar at bottom */
+    #bottom-bar{
+      position:fixed;bottom:0;left:0;right:0;
+      background:#1C1C1E;padding:10px 16px;
+      display:flex;align-items:center;gap:10px;
+      box-shadow:0 -4px 20px rgba(0,0,0,0.2);
+    }
+    #bottom-label{font-size:11px;color:#888;white-space:nowrap}
+    #bottom-bar-bg{flex:1;height:8px;background:#333;border-radius:4px;overflow:hidden}
+    #bottom-bar-fill{height:100%;background:#2D7D46;border-radius:4px;transition:width 0.4s ease}
+    #bottom-pct{font-size:13px;font-weight:800;color:#fff;min-width:36px;text-align:right}
+
+    @keyframes pop{0%{transform:scale(1)}40%{transform:scale(1.3)}100%{transform:scale(1)}}
+  </style>
+</head>
+<body>
+
+<div id="header">
+  <div style="font-size:28px">🏠</div>
+  <h1>Generalno Čišćenje Stana</h1>
+  <div id="header-sub">Tvrdim prstom lijevo-desno za prostorije</div>
+  <div id="total-badge">✅ <span id="total-done">0</span> / <span id="total-all">0</span> ukupno završeno</div>
+</div>
+
+<div id="room-tabs"></div>
+
+<div id="progress-wrap">
+  <div id="progress-box">
+    <div id="progress-inner">
+      <div id="progress-label">Odaberi prostoriju</div>
+      <div id="progress-bar-bg"><div id="progress-bar"></div></div>
+    </div>
+    <div id="progress-pct">0%</div>
+    <button id="reset-btn" onclick="resetRoom()">Reset</button>
+  </div>
+  <div id="congrats"></div>
+</div>
+
+<div id="tasks-wrap"></div>
+
+<div id="bottom-bar">
+  <div id="bottom-label">Stan:</div>
+  <div id="bottom-bar-bg"><div id="bottom-bar-fill" style="width:0%"></div></div>
+  <div id="bottom-pct">0%</div>
+</div>
+
+<script>
+const ROOMS = [
+  {
+    id:"kuhinja", name:"Kuhinja", emoji:"🍳", color:"#D4845A",
+    sections:[
+      {sec:"🧽 Radne površine i šporet", tasks:[
+        {id:"k1",e:"📦",n:"Skloni sve sa radnih površina"},
+        {id:"k2",e:"🧽",n:"Obrisi i dezinfikuj sve radne površine"},
+        {id:"k3",e:"🔥",n:"Očisti ploče za kuhanje"},
+        {id:"k4",e:"♨️",n:"Očisti rernu iznutra i izvana"},
+        {id:"k5",e:"❄️",n:"Obrisi frižider izvana"},
+      ]},
+      {sec:"🚰 Sudoper i okolina", tasks:[
+        {id:"k6",e:"🚰",n:"Operi sudoper i slavinu do sjaja"},
+        {id:"k7",e:"🪨",n:"Očisti prostor oko slavine od kamenca"},
+        {id:"k8",e:"🧱",n:"Pobrisi pločice iznad sudopera"},
+      ]},
+      {sec:"📡 Mikrovalovna i aparati", tasks:[
+        {id:"k9",e:"📡",n:"Očisti mikrovalnu iznutra i izvana"},
+        {id:"k10",e:"☕",n:"Obrisi toster/aparat za kafu"},
+        {id:"k11",e:"🔌",n:"Pospremi aparate i kablove"},
+      ]},
+      {sec:"🚪 Ormari i police", tasks:[
+        {id:"k12",e:"🚪",n:"Pobrisi vrata ormara"},
+        {id:"k13",e:"🌿",n:"Očisti otvorene police sa začinima"},
+        {id:"k14",e:"🗑️",n:"Provjeri i baci istekle namirnice"},
+      ]},
+      {sec:"❄️ Zamrzivač", tasks:[
+        {id:"k15",e:"🧲",n:"Obrisi magnete i vrata zamrzivača"},
+        {id:"k16",e:"📦",n:"Skloni sve s vrha zamrzivača"},
+        {id:"k17",e:"❄️",n:"Odmrzni i očisti zamrzivač iznutra"},
+        {id:"k18",e:"⭕",n:"Obrisi gumice na vratima zamrzivača"},
+      ]},
+      {sec:"🌀 Pod", tasks:[
+        {id:"k19",e:"🌀",n:"Pometi/usisaj pod"},
+        {id:"k20",e:"💧",n:"Operi pod do sjaja"},
+        {id:"k21",e:"🪵",n:"Obrisi postolje ormara pri dnu"},
+        {id:"k22",e:"🗑️",n:"Izvadi smeće i stavi novu kesu"},
+        {id:"k23",e:"🔘",n:"Obrisi prekidače i kvake"},
+      ]},
+    ]
+  },
+  {
+    id:"hodnik", name:"Hodnik", emoji:"🚪", color:"#7B6FAB",
+    sections:[
+      {sec:"🗄️ Ormar i police", tasks:[
+        {id:"h1",e:"📦",n:"Skloni sve kutije s vrha ormara"},
+        {id:"h2",e:"🗑️",n:"Sortiraj kutije — baci nepotrebno"},
+        {id:"h3",e:"🧹",n:"Obrisi prašinu s vrha ormara"},
+        {id:"h4",e:"🚪",n:"Obrisi vrata i tijelo ormara"},
+        {id:"h5",e:"📂",n:"Pospremi unutrašnjost ormara"},
+      ]},
+      {sec:"🚪 Ulazna vrata i zidovi", tasks:[
+        {id:"h6",e:"🚪",n:"Obrisi ulazna vrata iznutra"},
+        {id:"h7",e:"🔑",n:"Obrisi kvaku i bravu"},
+        {id:"h8",e:"💡",n:"Obrisi prekidače za svjetlo"},
+        {id:"h9",e:"🧱",n:"Obrisi mrlje na zidovima"},
+        {id:"h10",e:"🔌",n:"Obrisi kutiju s osiguračima izvana"},
+      ]},
+      {sec:"🌀 Pod", tasks:[
+        {id:"h11",e:"📦",n:"Skloni kartonsku kutiju i stvari s poda"},
+        {id:"h12",e:"👟",n:"Skloni papuče i uredi obuću"},
+        {id:"h13",e:"🌀",n:"Pometi/usisaj parket"},
+        {id:"h14",e:"💧",n:"Obrisi parket vlažnom krpom"},
+        {id:"h15",e:"🔲",n:"Obrisi prijelaz parket→pločice"},
+      ]},
+      {sec:"💡 Osvjetljenje i detalji", tasks:[
+        {id:"h16",e:"💡",n:"Obrisi prašinu sa lustera/reflektora"},
+        {id:"h17",e:"🔦",n:"Provjeri da li sve sijalice rade"},
+        {id:"h18",e:"🚪",n:"Obrisi okvire vrata"},
+        {id:"h19",e:"📦",n:"Odnesi stvari u odgovarajuće sobe"},
+      ]},
+    ]
+  },
+  {
+    id:"kupatilo", name:"Kupatilo", emoji:"🚿", color:"#5BC8F5",
+    sections:[
+      {sec:"🚽 WC školjka", tasks:[
+        {id:"ku1",e:"🚽",n:"Očisti WC iznutra sa dezinfekciom"},
+        {id:"ku2",e:"🧹",n:"Obrisi WC izvana — daska, poklopac, postolje"},
+        {id:"ku3",e:"⬜",n:"Očisti tipku za ispiranje"},
+        {id:"ku4",e:"🧱",n:"Obrisi zid oko WC-a"},
+      ]},
+      {sec:"🚰 Umivaonik i ormarić", tasks:[
+        {id:"ku5",e:"🚰",n:"Operi umivaonik iznutra do sjaja"},
+        {id:"ku6",e:"💧",n:"Očisti slavinu i ukloni kamenac"},
+        {id:"ku7",e:"🚪",n:"Obrisi ormarić ispod umivaonika izvana"},
+        {id:"ku8",e:"📂",n:"Pospremi unutrašnjost ormarića"},
+        {id:"ku9",e:"📦",n:"Skloni stvari s vrha mašine za veš"},
+      ]},
+      {sec:"🪞 Ogledalo i osvjetljenje", tasks:[
+        {id:"ku10",e:"🪞",n:"Pobrisi ogledalo sredstvom za staklo"},
+        {id:"ku11",e:"💡",n:"Obrisi lampu iznad ogledala"},
+        {id:"ku12",e:"🔲",n:"Obrisi policu ispod ogledala"},
+      ]},
+      {sec:"🫧 Mašina za veš", tasks:[
+        {id:"ku13",e:"👕",n:"Obrisi mašinu izvana"},
+        {id:"ku14",e:"⭕",n:"Očisti gumu oko bubnja iznutra"},
+        {id:"ku15",e:"🔧",n:"Očisti filter mašine"},
+        {id:"ku16",e:"🎛️",n:"Obrisi upravljačku ploču"},
+      ]},
+      {sec:"🛁 Kada/tuš", tasks:[
+        {id:"ku17",e:"👕",n:"Skloni veš s ivice kade"},
+        {id:"ku18",e:"🧽",n:"Ribaj kadu iznutra"},
+        {id:"ku19",e:"🚿",n:"Očisti slavinu i tuš glavu od kamenca"},
+        {id:"ku20",e:"🧱",n:"Obrisi zidne pločice oko kade"},
+      ]},
+      {sec:"💨 Ventilacija i bojler", tasks:[
+        {id:"ku21",e:"💨",n:"Obrisi ventilator na stropu"},
+        {id:"ku22",e:"🔥",n:"Obrisi prašinu s bojlera izvana"},
+        {id:"ku23",e:"🔧",n:"Provjeri cijevi oko bojlera"},
+      ]},
+      {sec:"🌀 Pod i završni detalji", tasks:[
+        {id:"ku24",e:"🧺",n:"Isprazni i pospremi korpu za veš"},
+        {id:"ku25",e:"👕",n:"Skloni veš s poda"},
+        {id:"ku26",e:"🪑",n:"Skloni stolicu/stepenik i obrisi"},
+        {id:"ku27",e:"🌀",n:"Pometi/usisaj pod"},
+        {id:"ku28",e:"💧",n:"Operi pločice do sjaja"},
+        {id:"ku29",e:"🔲",n:"Obrisi fugen između pločica"},
+        {id:"ku30",e:"🧻",n:"Dopuni toalet papir"},
+        {id:"ku31",e:"🛁",n:"Objesi svježe ručnike"},
+        {id:"ku32",e:"🚪",n:"Obrisi vrata i kvaku kupatila"},
+      ]},
+    ]
+  },
+  {
+    id:"balkon", name:"Balkon", emoji:"🌿", color:"#2D7D46",
+    sections:[
+      {sec:"👕 Veš i sušenje", tasks:[
+        {id:"b1",e:"👕",n:"Skloni osušeni veš sa žice"},
+        {id:"b2",e:"📎",n:"Pospremi štipaljke u korpicu"},
+        {id:"b3",e:"🧹",n:"Obrisi žicu za veš vlažnom krpom"},
+      ]},
+      {sec:"🪑 Sto i stalak", tasks:[
+        {id:"b4",e:"📦",n:"Skloni sve stvari sa stola"},
+        {id:"b5",e:"🧹",n:"Obrisi sto"},
+        {id:"b6",e:"🗑️",n:"Odluči šta ostaje, šta u stan, šta se baca"},
+      ]},
+      {sec:"👗 Odjeća i obuća", tasks:[
+        {id:"b7",e:"🧥",n:"Pospremi jakne i odjeću sa balkona"},
+        {id:"b8",e:"👟",n:"Uredi obuću — očisti ili spremi"},
+        {id:"b9",e:"🛍️",n:"Baci prazne kese s poda"},
+      ]},
+      {sec:"🧹 Sredstva i alati", tasks:[
+        {id:"b10",e:"🧹",n:"Pospremi metle, štap i četku"},
+        {id:"b11",e:"🔌",n:"Uredi kablove"},
+        {id:"b12",e:"🥣",n:"Pospremi zdjele i sitnice s poda"},
+      ]},
+      {sec:"🧱 Zidovi i ograde", tasks:[
+        {id:"b13",e:"🔩",n:"Obrisi ogradu balkona"},
+        {id:"b14",e:"🧱",n:"Obrisi zidove i uglove"},
+        {id:"b15",e:"🪟",n:"Obrisi okvire prozora/vrata balkona"},
+      ]},
+      {sec:"🌀 Pod i strop", tasks:[
+        {id:"b16",e:"🌀",n:"Pometi/usisaj pod"},
+        {id:"b17",e:"💧",n:"Operi pod — posebno uglove"},
+        {id:"b18",e:"🔲",n:"Provjeri odvod da nije zapušen"},
+        {id:"b19",e:"☁️",n:"Obrisi strop (skuplja prašinu)"},
+      ]},
+    ]
+  },
+  {
+    id:"dnevna", name:"Dnevna soba", emoji:"🛋️", color:"#4A90A4",
+    sections:[
+      {sec:"🛋️ Kauč i jastuci", tasks:[
+        {id:"d1",e:"📦",n:"Skloni sve stvari s kauča"},
+        {id:"d2",e:"🌀",n:"Usisaj kauč — sjedišta i između jastuka"},
+        {id:"d3",e:"💧",n:"Obrisi kauč vlažnom krpom"},
+        {id:"d4",e:"🛋️",n:"Uredi jastuke i deke"},
+      ]},
+      {sec:"☕ Stolić i tepih", tasks:[
+        {id:"d5",e:"📦",n:"Skloni sve sa stolića"},
+        {id:"d6",e:"🧹",n:"Obrisi stolić"},
+        {id:"d7",e:"🌀",n:"Usisaj tepih temeljno"},
+        {id:"d8",e:"🔲",n:"Provjeri ispod tepiha — posloži ravno"},
+      ]},
+      {sec:"📺 TV i komoda", tasks:[
+        {id:"d9",e:"📺",n:"Pobrisi TV ekran"},
+        {id:"d10",e:"🧹",n:"Obrisi TV komodu i police ispod TV-a"},
+        {id:"d11",e:"🔌",n:"Uredi kablove oko TV-a"},
+        {id:"d12",e:"📦",n:"Skloni i pospremi stvari s komode"},
+      ]},
+      {sec:"📚 Polica i komoda", tasks:[
+        {id:"d13",e:"📚",n:"Pospremi knjige na polici uredno"},
+        {id:"d14",e:"🧹",n:"Obrisi prašinu s police i komode"},
+        {id:"d15",e:"🌿",n:"Uredi biljke — zalij, ukloni suhe listove"},
+        {id:"d16",e:"🧹",n:"Obrisi lonce i podmetače biljaka"},
+        {id:"d17",e:"💧",n:"Obrisi prašinu s listova vlažnom krpom"},
+        {id:"d18",e:"🪴",n:"Provjeri da li trebaju presađivanje"},
+        {id:"d19",e:"📦",n:"Skloni kutije i pospremi"},
+      ]},
+      {sec:"🖼️ Zidna polica", tasks:[
+        {id:"d20",e:"🧹",n:"Obrisi prašinu sa zidne police"},
+        {id:"d21",e:"🖼️",n:"Uredi fotke i dekoracije"},
+      ]},
+      {sec:"🪟 Prozori, karniši i zavjese", tasks:[
+        {id:"d22",e:"🪟",n:"Obrisi prozore iznutra"},
+        {id:"d23",e:"🔲",n:"Obrisi okvire prozora"},
+        {id:"d24",e:"🎭",n:"Obrisi karniš i šipku za zavjese"},
+        {id:"d25",e:"🧺",n:"Skinuti zavjese i oprati ih"},
+        {id:"d26",e:"🪟",n:"Obrisi rolete/žaluzine"},
+      ]},
+      {sec:"🔥 Radijator", tasks:[
+        {id:"d27",e:"🔥",n:"Obrisi radijator izvana"},
+        {id:"d28",e:"🧹",n:"Očisti između rebara radijatora"},
+        {id:"d29",e:"🧱",n:"Obrisi zid iza i ispod radijatora"},
+      ]},
+      {sec:"🌀 Pod i ostalo", tasks:[
+        {id:"d30",e:"📦",n:"Skloni sve stvari s poda"},
+        {id:"d31",e:"🌀",n:"Usisaj cijeli parket"},
+        {id:"d32",e:"💧",n:"Obrisi parket vlažnom krpom"},
+        {id:"d33",e:"🔲",n:"Očisti ispod kauča i komoda"},
+        {id:"d34",e:"🎸",n:"Gitara — vrati na stalak"},
+        {id:"d35",e:"💡",n:"Obrisi lustre/sijalicu"},
+        {id:"d36",e:"🔘",n:"Obrisi prekidače i kvake"},
+        {id:"d37",e:"🌀",n:"Obrisi ventilator"},
+      ]},
+    ]
+  },
+  {
+    id:"spavaca", name:"Spavaća soba", emoji:"🛏️", color:"#C39BD3",
+    sections:[
+      {sec:"🛏️ Kreveti i posteljina", tasks:[
+        {id:"s1",e:"📦",n:"Skloni svu odjeću i stvari s oba kreveta"},
+        {id:"s2",e:"🛏️",n:"Promijeni posteljinu na oba kreveta"},
+        {id:"s3",e:"🌀",n:"Usisaj madrace"},
+        {id:"s4",e:"🪵",n:"Obrisi okvire oba kreveta"},
+      ]},
+      {sec:"🗄️ Komoda sa fiokama", tasks:[
+        {id:"s5",e:"📦",n:"Skloni sve stvari s vrha komode"},
+        {id:"s6",e:"🧹",n:"Obrisi vrh komode"},
+        {id:"s7",e:"👗",n:"Pospremi fioke — sortiraj odjeću"},
+        {id:"s8",e:"🗑️",n:"Baci nepotrebno"},
+      ]},
+      {sec:"🗄️ Veliki ormar", tasks:[
+        {id:"s9",e:"🪞",n:"Pobrisi ogledalo na ormaru do sjaja"},
+        {id:"s10",e:"🚪",n:"Obrisi vrata i tijelo ormara"},
+        {id:"s11",e:"🧹",n:"Obrisi prašinu s vrha ormara"},
+        {id:"s12",e:"👗",n:"Pospremi unutrašnjost — sortiraj odjeću"},
+      ]},
+      {sec:"📦 Pospremanje stvari", tasks:[
+        {id:"s13",e:"📦",n:"Pospremi plastične kutije — sortiraj sadržaj"},
+        {id:"s14",e:"🛍️",n:"Pospremi kese s poda"},
+        {id:"s15",e:"📚",n:"Uredi knjige uz krevet"},
+        {id:"s16",e:"🏠",n:"Odluči šta ostaje, šta ide van sobe"},
+      ]},
+      {sec:"🌀 Tepih i pod", tasks:[
+        {id:"s17",e:"📦",n:"Skloni sve s poda"},
+        {id:"s18",e:"🌀",n:"Usisaj tepih temeljno"},
+        {id:"s19",e:"🌀",n:"Usisaj/pometi parket cijele sobe"},
+        {id:"s20",e:"💧",n:"Obrisi parket vlažnom krpom"},
+        {id:"s21",e:"🔲",n:"Očisti ispod kreveta i komode"},
+      ]},
+      {sec:"🪟 Prozori i zavjese", tasks:[
+        {id:"s22",e:"🪟",n:"Obrisi prozore iznutra"},
+        {id:"s23",e:"🔲",n:"Obrisi okvire prozora"},
+        {id:"s24",e:"🎭",n:"Obrisi karniš"},
+        {id:"s25",e:"🧺",n:"Provjeri zavjese — da li trebaju pranje"},
+      ]},
+      {sec:"💡 Detalji", tasks:[
+        {id:"s26",e:"💡",n:"Obrisi plafonjeru"},
+        {id:"s27",e:"🔘",n:"Obrisi prekidače i kvake"},
+        {id:"s28",e:"🚪",n:"Obrisi okvire vrata"},
+        {id:"s29",e:"⭐",n:"Zvjezdice na zidu — obrisi zid oko njih"},
+        {id:"s30",e:"🐕",n:"Provjeri dlake od psa po krevetu"},
+      ]},
+    ]
+  },
+  {
+    id:"trpezarija", name:"Trpezarija", emoji:"🍽️", color:"#C4A84F",
+    sections:[
+      {sec:"🪑 Sto i stolice", tasks:[
+        {id:"t1",e:"📦",n:"Skloni sve sa stola"},
+        {id:"t2",e:"🧹",n:"Obrisi sto temeljno"},
+        {id:"t3",e:"🪑",n:"Obrisi sve stolice — sjedišta i noge"},
+        {id:"t4",e:"🔲",n:"Provjeri ispod stolica"},
+      ]},
+      {sec:"📚 Polica s knjigama", tasks:[
+        {id:"t5",e:"📚",n:"Izvadi knjige i obrisi prašinu s police"},
+        {id:"t6",e:"📚",n:"Vrati knjige uredno složene"},
+        {id:"t7",e:"🖼️",n:"Pospremi dekoracije i fotke na polici"},
+        {id:"t8",e:"🗿",n:"Obrisi figuricu i sitnice na vrhu"},
+      ]},
+      {sec:"❄️ Zamrzivač (lijevo)", tasks:[
+        {id:"t9",e:"📦",n:"Skloni sve s vrha zamrzivača"},
+        {id:"t10",e:"🧹",n:"Obrisi vrh zamrzivača"},
+        {id:"t11",e:"🧲",n:"Obrisi magnete i vrata zamrzivača"},
+        {id:"t12",e:"📂",n:"Pospremi unutrašnjost"},
+      ]},
+      {sec:"🌿 Biljke", tasks:[
+        {id:"t13",e:"💧",n:"Zalij biljke"},
+        {id:"t14",e:"🍃",n:"Ukloni suhe i žute listove"},
+        {id:"t15",e:"🪴",n:"Obrisi lonce i podmetače"},
+        {id:"t16",e:"🌿",n:"Uredi biljku na prozorskoj dasci"},
+      ]},
+      {sec:"🪟 Prozori, karniši i zavjese", tasks:[
+        {id:"t17",e:"🪟",n:"Obrisi oba velika prozora iznutra"},
+        {id:"t18",e:"🔲",n:"Obrisi okvire prozora"},
+        {id:"t19",e:"🔲",n:"Obrisi prozorsku dasku"},
+        {id:"t20",e:"🎭",n:"Obrisi karniš i šipku za zavjese"},
+        {id:"t21",e:"🧺",n:"Skinuti zavjese i oprati ih"},
+      ]},
+      {sec:"🔥 Radijator", tasks:[
+        {id:"t22",e:"🔥",n:"Obrisi radijator izvana"},
+        {id:"t23",e:"🧹",n:"Očisti između rebara radijatora"},
+        {id:"t24",e:"🧱",n:"Obrisi zid iza i ispod radijatora"},
+      ]},
+      {sec:"🌀 Tepih i pod", tasks:[
+        {id:"t25",e:"🌀",n:"Usisaj zeleni tepih temeljno"},
+        {id:"t26",e:"🌀",n:"Pometi/usisaj cijeli parket"},
+        {id:"t27",e:"💧",n:"Obrisi parket vlažnom krpom"},
+        {id:"t28",e:"🔲",n:"Očisti uglove sobe"},
+      ]},
+      {sec:"💡 Ostalo", tasks:[
+        {id:"t29",e:"💡",n:"Obrisi plafonjeru"},
+        {id:"t30",e:"🔘",n:"Obrisi prekidače i kvake"},
+        {id:"t31",e:"🚪",n:"Obrisi okvire vrata (dva ulaza)"},
+        {id:"t32",e:"🪟",n:"Obrisi staklo na gornjim dijelovima vrata"},
+        {id:"t33",e:"🧹",n:"Skloni metlu iz ugla — spremi na mjesto"},
+      ]},
+    ]
+  },
+];
+
+const STORAGE_KEY = "generalno_v1";
+let state = {checked:{}};
+try{const s=localStorage.getItem(STORAGE_KEY);if(s)state=JSON.parse(s);}catch{}
+function save(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(state));}catch{}}
+
+let activeRoom = 0;
+
+function allTasksForRoom(ri){return ROOMS[ri].sections.flatMap(s=>s.tasks);}
+function doneForRoom(ri){return allTasksForRoom(ri).filter(t=>state.checked[`r${ri}_${t.id}`]).length;}
+function totalAll(){return ROOMS.reduce((a,_,i)=>a+allTasksForRoom(i).length,0);}
+function doneAll(){return ROOMS.reduce((a,_,i)=>a+doneForRoom(i),0);}
+
+function color(){return ROOMS[activeRoom].color;}
+
+function renderHeader(){
+  const da=doneAll(), ta=totalAll();
+  document.getElementById("total-done").textContent=da;
+  document.getElementById("total-all").textContent=ta;
+  const pct=ta?Math.round(da/ta*100):0;
+  document.getElementById("bottom-bar-fill").style.width=pct+"%";
+  document.getElementById("bottom-pct").textContent=pct+"%";
+}
+
+function renderTabs(){
+  const wrap=document.getElementById("room-tabs");
+  wrap.innerHTML="";
+  ROOMS.forEach((r,i)=>{
+    const tasks=allTasksForRoom(i);
+    const done=doneForRoom(i);
+    const total=tasks.length;
+    const complete=done===total&&total>0;
+    const btn=document.createElement("button");
+    btn.className="room-btn"+(i===activeRoom?" active":"");
+    btn.style.setProperty("--c",r.color);
+    if(i===activeRoom){btn.style.background=r.color;btn.style.color="#fff";}
+    btn.innerHTML=`${r.emoji}<br><span style="font-size:11px">${r.name.split(" ")[0]}</span><br><span class="room-pct">${complete?"✓":done+"/"+total}</span>`;
+    btn.onclick=()=>{activeRoom=i;render();};
+    wrap.appendChild(btn);
+  });
+}
+
+function renderProgress(){
+  const r=ROOMS[activeRoom];
+  const tasks=allTasksForRoom(activeRoom);
+  const total=tasks.length;
+  const done=doneForRoom(activeRoom);
+  const pct=total?Math.round(done/total*100):0;
+  document.getElementById("progress-label").textContent=`${r.emoji} ${r.name} — Završeno ${done} od ${total}`;
+  const bar=document.getElementById("progress-bar");
+  bar.style.width=pct+"%";
+  bar.style.background=color();
+  document.getElementById("progress-pct").textContent=pct+"%";
+  document.getElementById("progress-pct").style.color=color();
+  const cong=document.getElementById("congrats");
+  if(done===total&&total>0){
+    cong.style.display="block";
+    cong.style.color=color();
+    cong.textContent=`🎉 ${r.name} je potpuno čista!`;
+  }else{cong.style.display="none";}
+}
+
+function renderTasks(){
+  const wrap=document.getElementById("tasks-wrap");
+  wrap.innerHTML="";
+  const r=ROOMS[activeRoom];
+  r.sections.forEach(sec=>{
+    const title=document.createElement("div");
+    title.className="section-title";
+    title.style.color=color();
+    title.textContent=sec.sec;
+    wrap.appendChild(title);
+    sec.tasks.forEach(task=>{
+      const key=`r${activeRoom}_${task.id}`;
+      const isChecked=!!state.checked[key];
+      const item=document.createElement("div");
+      item.className="task-item"+(isChecked?" checked":"");
+      if(isChecked){item.style.borderColor=color()+"55";item.style.background=color()+"10";}
+      const cb=document.createElement("div");
+      cb.className="task-checkbox";
+      if(isChecked){cb.style.background=color();cb.style.borderColor=color();cb.textContent="✓";}
+      const em=document.createElement("div");em.className="task-emoji";em.textContent=task.e;
+      const nm=document.createElement("div");nm.className="task-name";nm.textContent=task.n;
+      const ck=document.createElement("div");ck.className="task-done-icon";ck.textContent="✅";
+      item.appendChild(cb);item.appendChild(em);item.appendChild(nm);item.appendChild(ck);
+      item.onclick=()=>{
+        state.checked[key]=!state.checked[key];
+        save();render();
+      };
+      wrap.appendChild(item);
+    });
+  });
+}
+
+function resetRoom(){
+  Object.keys(state.checked).filter(k=>k.startsWith(`r${activeRoom}_`)).forEach(k=>delete state.checked[k]);
+  save();render();
+}
+
+function render(){renderHeader();renderTabs();renderProgress();renderTasks();}
+
+if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js').catch(()=>{});}
+render();
+</script>
+</body>
+</html>
